@@ -1,12 +1,15 @@
 # LTO（Link Time Optimization）能够优化静态库吗？
 
-LTO（链接时优化）背后的基本原理是，将 LLVM 的一些优化过程推迟到链接阶段。为什么是链接阶段呢？因为在编译流程中，链接阶段是整个程序（即整套编译单元）能够一次性全部获取的时刻，因此跨编译单元边界的优化成为可能。
+[LTO](https://llvm.org/docs/LinkTimeOptimization.html)（链接时优化）背后的基本原理是，将 LLVM 的一些优化过程推迟到链接阶段。为什么是链接阶段呢？因为在编译流程中，链接阶段是整个程序（即整套编译单元）能够一次性全部获取的时刻，因此跨编译单元边界的优化成为可能。
 
-> The basic principle behind LTO is that some of LLVM's optimization passes are pushed back to the linking stage. Why the linking stage? Because that is the point in the pipeline where the entire program (i.e. the whole set of compilation units) is available at once and thus optimizations across compilation unit boundaries become possible.
+> The basic principle behind LTO is that some of LLVM's optimization passes are pushed back to the linking stage. 
+
+
+> Why the linking stage? Because that is the point in the pipeline where the entire program (i.e. the whole set of compilation units) is available at once and thus optimizations across compilation unit boundaries become possible.
 
 我们知道，采用静态库的代码会被完全打包到最终程序中。如果采用静态库，编译器可以优化静态库中的代码吗？比如函数内联，死代码消除等。
 
-答案是可以的，比如添加-flto选项，编译静态库，编译可执行文件。我们可以通过查看汇编，反汇编，查看版本符号，对比可执行文件大小对比优化结果。
+答案是可以的，通过添加-flto选项，编译静态库，编译可执行文件。我们可以通过查看汇编，反汇编，查看版本符号，对比可执行文件大小对比优化结果。
 
 ## 静态库的例子
 
@@ -155,3 +158,12 @@ objdump -dC main_lto | grep -A10 '<main>'
 
 lto可以优化，函数内联‌，LTO允许将静态库中的square()函数内联到调用处，直接替换为5*5=25的常量计算结果。如果主程序未使用某些库函数，LTO可彻底移除相关代码，‌也就是死代码消除。还有很多优化。
 
+### 静态库和动态库LTO优化的区别
+
++ ‌静态库‌
+
+LTO在链接阶段可对静态库进行全局优化。由于静态库代码在编译时已完全嵌入可执行文件，链接器能跨模块分析代码，实现函数内联、死代码消除等跨文件优化‌。例如，静态库中的未使用函数会被彻底移除，减少最终文件体积。
+
++ ‌动态库‌
+  
+动态库本身是独立编译的二进制文件，LTO只能在生成动态库时对其内部代码进行局部优化。主程序链接动态库时，无法跨库边界进行全局优化（如无法内联动态库中的函数）。动态库的优化需依赖其自身的编译参数（如启用-flto）。
