@@ -1,5 +1,9 @@
 # LTO（Link Time Optimization）能够优化静态库吗？
 
+LTO（链接时优化）背后的基本原理是，将 LLVM 的一些优化过程推迟到链接阶段。为什么是链接阶段呢？因为在编译流程中，链接阶段是整个程序（即整套编译单元）能够一次性全部获取的时刻，因此跨编译单元边界的优化成为可能。
+
+> The basic principle behind LTO is that some of LLVM's optimization passes are pushed back to the linking stage. Why the linking stage? Because that is the point in the pipeline where the entire program (i.e. the whole set of compilation units) is available at once and thus optimizations across compilation unit boundaries become possible.
+
 我们知道，采用静态库的代码会被完全打包到最终程序中。如果采用静态库，编译器可以优化静态库中的代码吗？比如函数内联，死代码消除等。
 
 答案是可以的，比如添加-flto选项，编译静态库，编译可执行文件。我们可以通过查看汇编，反汇编，查看版本符号，对比可执行文件大小对比优化结果。
