@@ -1,10 +1,9 @@
 
-# C++模板小技巧：bvar中‌动态检测模板参数Op操作符是否实现加法
+[TOC]
 
-## ‌动态检测模板参数Op操作符是否实现加法
+## ‌动态检测模板参数 Op 操作符是否实现加法
 
-之前我们讲过bvar代码，今天分享一个关于c++模板的用法。‌动态检测模板参数Op操作符是否实现了加法行为。
-
+之前我们讲过 [bvar 代码](https://github.com/apache/brpc/blob/master/docs/cn/bvar.md "bvar 代码")，今天分享一个关于 c++模板的用法。‌ 动态检测模板参数 Op 操作符是否实现了加法行为。对于经常使用模板的同学，肯定不陌生了，我们一起看一下吧！
 
 ```c++
 // brpc/src/bvar/detail/series.h
@@ -61,26 +60,29 @@ struct DivideOnAddition<T, Op, typename butil::enable_if<butil::is_floating_poin
 };
 ```
 
-在代码中，ProbablyAddtition 的作用是 ‌动态检测 Op 操作符是否实现了加法行为‌，并根据检测结果决定是否执行除法操作。
+在代码中，ProbablyAddtition 的作用是 ‌ 动态检测 Op 操作符是否实现了加法行为 ‌，并根据检测结果决定是否执行除法操作。
 
 它是如何验证是否实现加法的呢？
-+ 在构造 ProbablyAddtition 时，会创建一个初始值为 32 的 T 类型对象 res。
-+ 调用 call_op_returning_void(op, res, T(64))，假设这会将 res 与 64 进行 Op 操作。
-+ 如果 Op 是加法，res 会变为 32 + 64 = 96，此时 _ok 被设为 true。如果 Op 不是加法（如乘法），res 会变成其他值，_ok 设为 false。
+
+- 在构造 ProbablyAddtition 时，会创建一个初始值为 32 的 T 类型对象 res。
+- 调用 call_op_returning_void(op, res, T(64))，假设这会将 res 与 64 进行 Op 操作。
+- 如果 Op 是加法，res 会变为 32 + 64 = 96，此时 \_ok 被设为 true。如果 Op 不是加法（如乘法），res 会变成其他值，\_ok 设为 false。
 
 只有检测到 Op 是加法时（probably_add 为 true），才会对输入 obj 执行除法操作。
 
 ```c++
 static ProbablyAddtition<T, Op> probably_add(op);
 ```
-由于 probably_add 是静态变量，‌针对每个 T 和 Op 类型组合，检测只会进行一次‌。首次调用 inplace_divide 时检测，后续直接复用结果。
 
-## bvar中的应用
-上面的代码在bvar中是用来实现SeriesBase类的append_second方法。
+由于 probably_add 是静态变量，‌ 针对每个 T 和 Op 类型组合，检测只会进行一次 ‌。首次调用 inplace_divide 时检测，后续直接复用结果。
 
-对于SeriesBase类的append_second方法，它首先将value赋值给_data.second(_nsecond)，然后_nsecond自增1。如果_nsecond等于60，则将_data.second(0)的值赋给tmp，并遍历从1到59的索引，将_data.second(i)的值与tmp进行op操作，并将结果赋给tmp。最后，调用DivideOnAddition<T, Op>::inplace_divide(tmp, op, 60)对tmp进行除法操作。然后对分钟进行赋值，并调用append_minute方法。
+## bvar 中的应用
 
-也就是假如统计61秒的时候，就把前60秒的一个平均值计算出来，并赋值给分钟。超过60分钟，就平均统计，进位到小时，以此类推。超过24小时，就平均统计，进位到天，以此类推。
+上面的代码在 bvar 中是用来实现 SeriesBase 类的 append_second 方法。
+
+对于 SeriesBase 类的 append_second 方法，它首先将 value 赋值给\_data.second(\_nsecond)，然后\_nsecond 自增 1。如果\_nsecond 等于 60，则将\_data.second(0)的值赋给 tmp，并遍历从 1 到 59 的索引，将\_data.second(i)的值与 tmp 进行 op 操作，并将结果赋给 tmp。最后，调用 DivideOnAddition<T, Op>::inplace_divide(tmp, op, 60)对 tmp 进行除法操作。然后对分钟进行赋值，并调用 append_minute 方法。
+
+也就是假如统计 60 秒的时候，就把前 60 秒的总和计算出来，然后除以60（一分钟等于60秒）并赋值给分钟。超过 60 分钟，就统计总和除以60（1小时等于60分钟），进位到小时，以此类推。超过 24 小时，就统计总和除以24（一天等于24小时），进位到天，以此类推。
 
 ```c++
 template <typename T, typename Op>
@@ -131,7 +133,7 @@ private:
                 memset(static_cast<void*>(_array), 0, sizeof(_array));
             }
         }
-        
+
         T& second(int index) { return _array[index]; }
         const T& second(int index) const { return _array[index]; }
 
@@ -157,7 +159,7 @@ protected:
 };
 ```
 
-### 通过一个例子看它的用法
+## 通过一个例子验证该模板用法
 
 下面是一个简单的例子，展示了如何使用这个模板：
 
@@ -201,7 +203,7 @@ void call_op_returning_void(const Op &op, T &a, const T &b)
     a = op(a, b);
 }
 
-// -------------------- 原始代码中的模板定义 --------------------
+// -------------------- 第一小节代码中的模板定义 --------------------
 
 
 // -------------------- 测试用例 --------------------
