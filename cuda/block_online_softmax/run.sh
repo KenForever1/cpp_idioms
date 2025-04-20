@@ -1,0 +1,1 @@
+TORCH_CUDA_ARCH_LIST="8.9" python3 main.py

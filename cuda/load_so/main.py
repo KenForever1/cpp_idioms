@@ -19,6 +19,10 @@ import torch
 
 user_home_path = os.path.expanduser('~')
 
+
+block_online_softmax = _import_module_from_library('block_online_softmax', user_home_path+'/.cache/torch_extensions/py310_cu121/block_online_softmax', True)
+print(f'Load softmax from {user_home_path}/.cache/torch_extensions/py310_cu121/block_online_softmax')
+
 online_softmax = _import_module_from_library('online_softmax', user_home_path+'/.cache/torch_extensions/py310_cu121/online_softmax', True)
 print(f'Load fused from {user_home_path}/.cache/torch_extensions/py310_cu121/online_softmax')
 
@@ -35,6 +39,13 @@ with torch.autograd.profiler.profile(use_cuda=True) as prof:
     # print("CUDA计算online Softmax:", X_softmax_cuda)
 # Self CPU time total: 11.053ms
 # Self CUDA time total: 10.688ms
+
+print(prof.key_averages().table(sort_by='cuda_time_total', row_limit=6))
+
+
+with torch.autograd.profiler.profile(use_cuda=True) as prof:
+    X_block_online_softmax_cuda = block_online_softmax.block_online_softmax(X, 6)
+    # print("CUDA计算online Softmax:", X_block_online_softmax_cuda)
 
 print(prof.key_averages().table(sort_by='cuda_time_total', row_limit=10))
 
